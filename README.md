@@ -68,7 +68,18 @@ activate_control_app
 plugin :cloudwatch
 ```
 
-It activates the puma control rack application, and enables the puma-cloudwatch plugin to send metrics.
+It activates the puma control rack application to listen on unix domain socket in a default temp directory by default, and enables the puma-cloudwatch plugin to send metrics.
+
+If you run puma like this `puma --control-url 'tcp://127.0.0.1:9293' --control-token abc123` then leave out activate_control_app:
+```ruby
+plugin :cloudwatch
+```
+
+You could instead specify the control url and control token in your `config/puma.rb` like this:
+```ruby
+activate_control_app 'tcp://127.0.0.1:9293', auth_token: 'abc123'
+plugin :cloudwatch
+```
 
 ### More Setup Notes
 

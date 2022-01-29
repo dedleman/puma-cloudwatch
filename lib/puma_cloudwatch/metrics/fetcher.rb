@@ -1,4 +1,5 @@
 require "json"
+require "uri"
 require "socket"
 
 class PumaCloudwatch::Metrics
@@ -17,10 +18,22 @@ class PumaCloudwatch::Metrics
 
   private
     def read_socket
-      Socket.unix(@control_url.gsub('unix://', '')) do |socket|
-        socket.print("GET /stats?token=#{@control_auth_token} HTTP/1.0\r\n\r\n")
-        socket.read
+      uri = URI.parse @control_url
+      http_get_string = "GET /stats?token=#{@control_auth_token} HTTP/1.0\r\n\r\n"
+
+      socket = case uri.scheme
+      when 'tcp'
+        Socket.tcp(uri.host, uri.port)
+      when 'unix'
+        Socket.unix("#{uri.host}#{uri.path}")
+      else
+        raise "Invalid scheme: #{uri.scheme}"
       end
+
+      socket.print(http_get_string)
+      socket.read
+    ensure
+      socket.close if socket && !socket.closed?
     end
 
     def with_retries
